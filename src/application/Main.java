@@ -9,7 +9,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 
-// stage is the window, scene is the container that holds all the elements
+// create stage which is the window, scene is the container that holds all the elements
 public class Main extends Application {
 	@Override
 	public void start(Stage primaryStage) {
