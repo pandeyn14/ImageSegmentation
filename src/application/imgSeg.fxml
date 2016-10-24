@@ -7,15 +7,13 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="application.ImgSegController">
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"  fx:controller="application.ImgSegController">
   <bottom>
-    <HBox alignment="CENTER" spacing="30.0">
+    <HBox alignment="CENTER">
       <padding>
-        <Insets bottom="25.0" right="25.0" top="25.0" />
+        <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
       </padding>
-      <Button fx:id="chooseImageButton" alignment="CENTER" onAction="#chooseImage" text="Choose Image" />
-      <Button fx:id="saveImageButton" alignment="CENTER" onAction="#saveImage" text="Save Image"  disable="true"/>
-      <Button fx:id="loadImageButton" alignment="CENTER" onAction="#loadImage" text="Apply Operation"  disable="true"/>
+      <Button fx:id="loadImageButton" alignment="CENTER" onAction="#loadImage" text="Load Image" />
     </HBox>
   </bottom>
   <center>
@@ -28,41 +26,17 @@
   </center>
   <top>
     <VBox>
-    <MenuBar id="menuBar" focusTraversable="true" >  
-        <menus>  
-            <Menu text="File">  
-                <items>  
-                    <MenuItem fx:id="Open" text="Open" onAction="#chooseImage"/>  
-                    <MenuItem fx:id="Save" text="Save" onAction="#saveImage" disable="true"/>   
-                    <SeparatorMenuItem  />  
-                    <MenuItem fx:id="Exit" text="Exit" onAction="#exitOnAction" />  
-                </items>  
-            </Menu>  
-            <Menu text="About">  
-                <items>  
-                    <MenuItem fx:id="About" text="About" onAction="#PopUp"/>  
-                </items>  
-            </Menu>  
-            <Menu  fx:id="Help" text="Help" onAction="#help">  
-                <items>  
-                    <MenuItem text="FAQs"/>    
-                </items>  
-            </Menu>  
-        </menus>  
-    </MenuBar>
+      
       <Separator />
       <HBox alignment="CENTER" spacing="10.0">
         <padding>
           <Insets bottom="10.0" top="10.0" />
         </padding>
-        <CheckBox fx:id="blueChannel" onAction="#blueChannelSelected" text="Blue Channel" disable="true"/>
-        <CheckBox fx:id="greenChannel" onAction="#greenChannelSelected" text="Green Channel" disable="true"/>
-        <CheckBox fx:id="redChannel" onAction="#redChannelSelected" text="Red Channel" disable="true"/>
-        <CheckBox fx:id="sobel" onAction="#sobelSelected" text="Sobel" disable="true"/>
-        <CheckBox fx:id="canny" onAction="#cannySelected" text="Canny" disable="true"/>
-        <Label fx:id="thresholdLabel" text="Threshold" disable="true" />
-        <Slider fx:id="threshold" blockIncrement="0.25" disable="true" max="30.0" min="0.25" />
-        <Label fx:id="thresholdValue" text="" />
+        <CheckBox fx:id="canny" onAction="#cannySelected" text="Edge detection" />
+        <Label text="Canny Threshold" />
+        <Slider fx:id="threshold" disable="true" />
+        <CheckBox fx:id="dilateErode" onAction="#dilateErodeSelected" text="Background removal" />
+        <CheckBox fx:id="inverse" disable="true" text="Invert" />
       </HBox>
       <Separator />
     </VBox>
