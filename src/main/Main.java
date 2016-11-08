@@ -1,10 +1,11 @@
-package application;
+package main;
 	
 import org.opencv.core.Core;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -22,9 +23,11 @@ public class Main extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		try {
-			
+
+
 			            // load the FXML resource
 						BorderPane root = (BorderPane) FXMLLoader.load(getClass().getResource("imgSeg.fxml"));
+
 						
 						// create and style a scene
 						Scene scene = new Scene(root, 800, 600);

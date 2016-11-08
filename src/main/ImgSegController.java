@@ -1,4 +1,4 @@
-package application;
+package main;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -13,13 +13,15 @@ import java.util.Vector;
 import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageOutputStream;
 
-import org.opencv.core.Core;
+import org.opencv.core.*;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -54,10 +56,11 @@ import javafx.stage.Stage;
 /*
  * 1. Choose Image for Segmentation and Edge Detection
  * 2. Apply Green channel or Red Channel and save images
- * 3. Convert image to mat
- * 4. Perform edge detection using Canny  or Sobel operator
- * 5. Convert mat to image
- * 6. Output image to ImageView or save for future reference
+ * 3. Choose and Convert image to mat
+ * 4. Perform image Segmentation
+ * 5. Perform edge detection using Canny  or Sobel operator
+ * 6. Convert mat to image
+ * 7. Output image to ImageView or save for future reference
  * 
  * */
 
@@ -94,9 +97,12 @@ public class ImgSegController extends Stage
 			@FXML
 			private CheckBox redChannel;
 			
-			// checkbox for enabling/disabling blueChannel
+			// checkbox for background and foreground
 			@FXML
-			private CheckBox blueChannel;
+			private CheckBox background;
+			
+			@FXML
+			private CheckBox foreground;
 			
 			@FXML
 			private Slider threshold;
@@ -130,6 +136,9 @@ public class ImgSegController extends Stage
 			
 			Image img ;
 			Image outputImage;
+			
+		    static int Imageheight;	
+		    static int Imagewidth;
 		
 			//Choose image for processing
 			@FXML
@@ -147,14 +156,15 @@ public class ImgSegController extends Stage
 			    				   
 					try {
 						imagepath = InputFile.toURI().toURL().toString();
-				        img = new Image(imagepath,/*width*/760,/*height*/460,/*orig size*/false, true);
+				        img = new Image(imagepath,/*width*/660,/*height*/460,/*orig size*/false, true);
 				        this.image = imgToMat(img);
 						this.currentFrame.setImage(this.matToImg(this.image));
 						
 						canny.setDisable(false);
 						sobel.setDisable(false);
 						greenChannel.setDisable(false);
-						blueChannel.setDisable(false);
+						background.setDisable(false);
+						foreground.setDisable(false);
 						redChannel.setDisable(false);
 						saveImageButton.setDisable(false);
 						thresholdLabel.setDisable(false);
@@ -177,7 +187,7 @@ public class ImgSegController extends Stage
 	            if (outputFile != null) {
 	                try {
 	                	outputImgPath = outputFile.toURI().toURL().toString();
-	                	outputImage = new Image(outputImgPath,/*width*/760,/*height*/460,/*orig size*/false, true);
+	                	outputImage = new Image(outputImgPath,/*width*/660,/*height*/460,/*orig size*/false, true);
 	                    ImageIO.write(SwingFXUtils.fromFXImage(currentFrame.getImage(),
 	                        null), "png", outputFile);
 	                } catch (IOException ex) {
@@ -226,47 +236,54 @@ public class ImgSegController extends Stage
 					currentFrame.setImage(processedImage);
 				}
 				
-				if (this.blueChannel.isSelected()){
-					imageFrame = this.applyBlueChannel(imageFrame);	
+				if (this.foreground.isSelected()){
+					imageFrame = this.applySegmentation(imageFrame);	
 					Image processedImage =  matToImg(imageFrame);
-					thresholdValue.setText(""); //reset
 					currentFrame.setImage(processedImage);
 				}
+				
+				if (this.background.isSelected()){
+					imageFrame = this.applySegmentation(imageFrame);	
+					Image processedImage =  matToImg(imageFrame);
+					currentFrame.setImage(processedImage);
+				}
+				
 								
 			}
 			
 		   //convert javaFX image to mat object	
 		   public static Mat imgToMat(Image image) {
 				   
-				    int Imageheight = (int) image.getHeight();	
-				    int Imagewidth = (int) image.getWidth();				
-					byte[] buffer = new byte[Imagewidth * Imageheight * 4];
+				Imageheight = (int) image.getHeight();	
+				Imagewidth = (int) image.getWidth();				
+				byte[] buffer = new byte[Imagewidth * Imageheight * 4];
 			
-					PixelReader pixelreader = image.getPixelReader();
-					WritablePixelFormat<ByteBuffer> format = WritablePixelFormat.getByteBgraInstance();
-					pixelreader.getPixels(0, 0, Imagewidth, Imageheight, format, buffer, 0, Imagewidth * 4);
+				PixelReader pixelreader = image.getPixelReader();
+				WritablePixelFormat<ByteBuffer> format = WritablePixelFormat.getByteBgraInstance();
+				pixelreader.getPixels(0, 0, Imagewidth, Imageheight, format, buffer, 0, Imagewidth * 4);
 			
-					Mat mat = new Mat(Imageheight, Imagewidth, CvType.CV_8UC4);
-					mat.put(0, 0, buffer);
-					return mat;
+				Mat mat = new Mat(Imageheight, Imagewidth, CvType.CV_8UC4);
+				mat.put(0, 0, buffer);
+				return mat;
 		   }
 			   
 		   //convert mat object to javaFX image
 		   private Image matToImg(Mat image)
 		   {
-					// create buffer
-					MatOfByte buffer = new MatOfByte();
-					// encode the image in the buffer, according to the PNG format
-					Imgcodecs.imencode(".png", image, buffer);
-					// build and return an Image created 
-					return new Image(new ByteArrayInputStream(buffer.toArray()));
+				// create buffer
+				MatOfByte buffer = new MatOfByte();
+				// encode the image in the buffer, according to the PNG format
+				Imgcodecs.imencode(".png", image, buffer);
+				// build and return an Image created 
+				return new Image(new ByteArrayInputStream(buffer.toArray()));
 			}
+		   
 
             //apply canny operator for edge detection
 			private Mat applyCanny(Mat image)
 			{
 				// create grayscale and final result objects
-				Mat grayImage = new Mat();
+				Mat grayImage = image;
 				Mat cannymat = new Mat();
 				
 				// convert rgb to grayscale
@@ -276,13 +293,15 @@ public class ImgSegController extends Stage
 				Imgproc.blur(grayImage, cannymat, new Size(3, 3));
 				
 				// canny detector, with ratio of lower:upper threshold of 3:1
-				Imgproc.Canny(cannymat, cannymat, this.threshold.getValue(), this.threshold.getValue() * 3);
+				Imgproc.Canny(cannymat, cannymat, this.threshold.getValue(), this.threshold.getValue() * 2, 3, false);
 				
-				// using Canny's output as a mask, display the result
-				Mat canny = new Mat();
-				image.copyTo(canny, cannymat);
+				Mat dest = new Mat();
+				Core.add(dest,new Scalar(0,0,0,0), dest);
 				
-				return canny;
+				image.copyTo(dest, cannymat);
+
+				return dest;
+
 			}
 			
             //apply sobel for edge detection
@@ -317,17 +336,56 @@ public class ImgSegController extends Stage
 				return sobel;
 	
 			}
-            
-			//split image into blue, red and green channel, return blue
-			private Mat applyBlueChannel(Mat imageFrame) {
-
-				List<Mat> rgb = new ArrayList<Mat>(3);
-				Core.split(imageFrame, rgb);
-				Mat Blue = rgb.get(0);
-				return Blue;
+			          
+			//image segmentation
+			 private Mat applySegmentation(Mat imageFrame){
+				 
+				Mat boundary = new Mat();
+					
+			    Imgproc.cvtColor(imageFrame, boundary, Imgproc.COLOR_BGR2GRAY);
+			    Imgproc.threshold(boundary, boundary, 0, 127, Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
 				
+				// get the average hue value of the image
+				double threshValue = this.getHistAverage(boundary);
+						
+				Imgproc.blur(boundary, boundary, new Size(5, 5));
+					
+				// dilate to fill gaps, erode to smooth edges
+				Imgproc.dilate(boundary, boundary, new Mat(), new Point(-1, -1), 1);
+				Imgproc.erode(boundary, boundary, new Mat(), new Point(-1, -1), 3);
+					
+				if(foreground.isSelected())
+				Imgproc.threshold(boundary, boundary, threshValue, 179.0, Imgproc.THRESH_BINARY);
+					
+				if(background.isSelected())
+				Imgproc.threshold(boundary, boundary, threshValue, 179.0, Imgproc.THRESH_BINARY_INV);
+					
+				// create the new image
+				Mat foreground = new Mat(imageFrame.size(), CvType.CV_8UC3, new Scalar(0, 0, 0));
+					
+				imageFrame.copyTo(foreground, boundary);
+					
+			    return foreground;
+			 }
+			 
+
+			private double getHistAverage(Mat boundary) {
+
+				double average = 0.0;
+				Mat hist = new Mat();
+				MatOfInt histSize = new MatOfInt(180);
+				List<Mat> split = new ArrayList<>();
+				split.add(boundary);
+					
+				// compute the histogram
+				Imgproc.calcHist(split, new MatOfInt(0), new Mat(), hist, histSize, new MatOfFloat(0, 179));
+
+				for (int h = 0; h < 180; h++)
+				    average += (hist.get(h, 0)[0] * h);
+					
+				return average = average / boundary.size().height / boundary.size().width;
 			}
-			
+
 			//split image into blue, red and green channel, return red
 			private Mat applyRedChannel(Mat imageFrame) {
 
@@ -357,7 +415,9 @@ public class ImgSegController extends Stage
 				
 			    if (this.redChannel.isSelected())       this.redChannel.setSelected(false);
 			    
-			    if (this.blueChannel.isSelected())       this.blueChannel.setSelected(false);
+			    if (this.background.isSelected())       this.background.setSelected(false);
+			    
+			    if (this.foreground.isSelected())       this.foreground.setSelected(false);
 				
 				if (this.canny.isSelected())            this.canny.setSelected(false);
 				
@@ -381,7 +441,9 @@ public class ImgSegController extends Stage
 				
 			    if (this.redChannel.isSelected())          this.redChannel.setSelected(false);
 			    
-			    if (this.blueChannel.isSelected())         this.blueChannel.setSelected(false);
+			    if (this.background.isSelected())         this.background.setSelected(false);
+			    
+			    if (this.foreground.isSelected())       this.foreground.setSelected(false);
 				
 				if (this.sobel.isSelected())               this.sobel.setSelected(false);
 				
@@ -415,7 +477,9 @@ public class ImgSegController extends Stage
 				
 				if (this.redChannel.isSelected())       this.redChannel.setSelected(false);
 				
-				if (this.blueChannel.isSelected())      this.blueChannel.setSelected(false);
+				if (this.background.isSelected())      this.background.setSelected(false);
+				
+				if (this.foreground.isSelected())       this.foreground.setSelected(false);
 				
 				if (this.greenChannel.isSelected())     loadImageButton.setDisable(false);
 					
@@ -440,7 +504,9 @@ public class ImgSegController extends Stage
 				
 				if (this.greenChannel.isSelected())      this.greenChannel.setSelected(false);
 				
-				if (this.blueChannel.isSelected())       this.blueChannel.setSelected(false);
+				if (this.foreground.isSelected())       this.foreground.setSelected(false);
+				
+				if (this.background.isSelected())       this.background.setSelected(false);
 				
 				if (this.redChannel.isSelected())        loadImageButton.setDisable(false);
 					
@@ -448,7 +514,7 @@ public class ImgSegController extends Stage
 			
 			//code executed when redChannel checkbox is selected
 			@FXML
-			protected void blueChannelSelected()
+			protected void backgroundSelected()
 			{
 				// uncheck canny checkbox, disable its slider
 				if (this.canny.isSelected())
@@ -467,11 +533,37 @@ public class ImgSegController extends Stage
 				
 				if (this.redChannel.isSelected())        this.redChannel.setSelected(false);
 				
-				if (this.blueChannel.isSelected())       loadImageButton.setDisable(false);
+				if (this.background.isSelected())       loadImageButton.setDisable(false);
+				
+				if (this.foreground.isSelected())       this.foreground.setSelected(false);
 					
 			}
 			
-			
+			@FXML
+			protected void foregroundSelected()
+			{
+				// uncheck canny checkbox, disable its slider
+				if (this.canny.isSelected())
+				{
+					this.canny.setSelected(false);					
+					this.threshold.setDisable(true);
+				}
+				
+				if (this.sobel.isSelected())
+				{
+					this.sobel.setSelected(false);					
+					this.threshold.setDisable(true);
+				}
+				
+				if (this.greenChannel.isSelected())      this.greenChannel.setSelected(false);
+				
+				if (this.redChannel.isSelected())        this.redChannel.setSelected(false);
+				
+				if (this.background.isSelected())       this.background.setSelected(false);
+				
+				if (this.foreground.isSelected())       loadImageButton.setDisable(false);
+					
+			}
 			
 			@FXML
 			private void exitOnAction(){
@@ -493,3 +585,5 @@ public class ImgSegController extends Stage
 			
 			
 }// end of class
+
+

@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="application.ImgSegController">
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="main.ImgSegController">
   <bottom>
     <HBox alignment="CENTER" spacing="30.0">
       <padding>
@@ -55,9 +55,10 @@
         <padding>
           <Insets bottom="10.0" top="10.0" />
         </padding>
-        <CheckBox fx:id="blueChannel" onAction="#blueChannelSelected" text="Blue Channel" disable="true"/>
         <CheckBox fx:id="greenChannel" onAction="#greenChannelSelected" text="Green Channel" disable="true"/>
         <CheckBox fx:id="redChannel" onAction="#redChannelSelected" text="Red Channel" disable="true"/>
+        <CheckBox fx:id="background" onAction="#backgroundSelected" text="Background" disable="true"/>
+        <CheckBox fx:id="foreground" onAction="#foregroundSelected" text="Foreground" disable="true"/>
         <CheckBox fx:id="sobel" onAction="#sobelSelected" text="Sobel" disable="true"/>
         <CheckBox fx:id="canny" onAction="#cannySelected" text="Canny" disable="true"/>
         <Label fx:id="thresholdLabel" text="Threshold" disable="true" />
