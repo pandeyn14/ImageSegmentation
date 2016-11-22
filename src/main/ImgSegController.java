@@ -113,18 +113,6 @@ public class ImgSegController extends Stage
 			
 			@FXML 
 			private Label thresholdLabel;
-			
-			@FXML 
-			private MenuItem Exit;
-			
-			@FXML 
-			private MenuItem Save;
-			
-			@FXML 
-			private MenuItem About;
-			
-			@FXML 
-			private MenuItem Help;
 
 			private Mat image;
 			
@@ -156,7 +144,7 @@ public class ImgSegController extends Stage
 			    				   
 					try {
 						imagepath = InputFile.toURI().toURL().toString();
-				        img = new Image(imagepath,/*width*/660,/*height*/460,/*orig size*/false, true);
+				        img = new Image(imagepath,/*width*/660,/*height*/460,/*orig size*/true, true);
 				        this.image = imgToMat(img);
 						this.currentFrame.setImage(this.matToImg(this.image));
 						
@@ -168,7 +156,7 @@ public class ImgSegController extends Stage
 						redChannel.setDisable(false);
 						saveImageButton.setDisable(false);
 						thresholdLabel.setDisable(false);
-						Save.setDisable(false);
+						
 						
 					} catch (MalformedURLException e) {
 						// TODO Auto-generated catch block
@@ -187,7 +175,7 @@ public class ImgSegController extends Stage
 	            if (outputFile != null) {
 	                try {
 	                	outputImgPath = outputFile.toURI().toURL().toString();
-	                	outputImage = new Image(outputImgPath,/*width*/660,/*height*/460,/*orig size*/false, true);
+	                	outputImage = new Image(outputImgPath,/*width*/660,/*height*/460,/*orig size*/true, true);
 	                    ImageIO.write(SwingFXUtils.fromFXImage(currentFrame.getImage(),
 	                        null), "png", outputFile);
 	                } catch (IOException ex) {
@@ -289,14 +277,14 @@ public class ImgSegController extends Stage
 				// convert rgb to grayscale
 				Imgproc.cvtColor(image, grayImage, Imgproc.COLOR_BGR2GRAY);
 				
-				// reduce noise with a 3x3 kernel
-				Imgproc.blur(grayImage, cannymat, new Size(3, 3));
+				// remove noise in the image with 5*5 Gaussian filter
+				Imgproc.blur(grayImage, cannymat, new Size(5, 5));
 				
 				// canny detector, with ratio of lower:upper threshold of 3:1
-				Imgproc.Canny(cannymat, cannymat, this.threshold.getValue(), this.threshold.getValue() * 2, 3, false);
+				Imgproc.Canny(cannymat, cannymat, this.threshold.getValue(), this.threshold.getValue() * 1, 3, false);
 				
 				Mat dest = new Mat();
-				Core.add(dest,new Scalar(0,0,0,0), dest);
+				Core.add(dest,new Scalar(0), dest);
 				
 				image.copyTo(dest, cannymat);
 
@@ -321,7 +309,7 @@ public class ImgSegController extends Stage
 		        //Converting to grayscale image
 		        Imgproc.cvtColor(image, gray, Imgproc.COLOR_BGR2GRAY);
 		        
-		      //Calculating gradient in vertical direction
+		        //Calculating gradient in vertical direction
 		        Imgproc.Sobel(gray, y, CvType.CV_16S, 0, 1, 3, 1, 0);
 
 		        //Calculating gradient in horizontal direction
@@ -343,26 +331,27 @@ public class ImgSegController extends Stage
 				Mat boundary = new Mat();
 					
 			    Imgproc.cvtColor(imageFrame, boundary, Imgproc.COLOR_BGR2GRAY);
-			    Imgproc.threshold(boundary, boundary, 0, 127, Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
-				
-				// get the average hue value of the image
+			    
+			    // get the average hue value of the image
 				double threshValue = this.getHistAverage(boundary);
 						
 				Imgproc.blur(boundary, boundary, new Size(5, 5));
 					
 				// dilate to fill gaps, erode to smooth edges
-				Imgproc.dilate(boundary, boundary, new Mat(), new Point(-1, -1), 1);
+				Imgproc.dilate(boundary, boundary, new Mat(), new Point(-1, -1), 4);
 				Imgproc.erode(boundary, boundary, new Mat(), new Point(-1, -1), 3);
-					
+				
+				//get foreground of the image
 				if(foreground.isSelected())
-				Imgproc.threshold(boundary, boundary, threshValue, 179.0, Imgproc.THRESH_BINARY);
-					
+				Imgproc.threshold(boundary, boundary, threshValue, 179.0, Imgproc.THRESH_BINARY+ Imgproc.THRESH_OTSU);
+				
+				//get foreground of the image
 				if(background.isSelected())
-				Imgproc.threshold(boundary, boundary, threshValue, 179.0, Imgproc.THRESH_BINARY_INV);
+				Imgproc.threshold(boundary, boundary, threshValue, 179.0, Imgproc.THRESH_BINARY_INV +Imgproc.THRESH_OTSU);
 					
 				// create the new image
-				Mat foreground = new Mat(imageFrame.size(), CvType.CV_8UC3, new Scalar(0, 0, 0));
-					
+				Mat foreground = new Mat(imageFrame.size(), CvType.CV_8UC3, new Scalar(255,255,255));
+				
 				imageFrame.copyTo(foreground, boundary);
 					
 			    return foreground;
@@ -563,24 +552,6 @@ public class ImgSegController extends Stage
 				
 				if (this.foreground.isSelected())       loadImageButton.setDisable(false);
 					
-			}
-			
-			@FXML
-			private void exitOnAction(){
-				
-				Exit.setOnAction(actionEvent -> Platform.exit());
-			}
-			
-			@FXML
-			public void PopUp(){
-			    
-			   this.setTitle("About");
-			}
-			
-			@FXML
-			public void help(){
-			    
-			    this.setTitle("Help");
 			}
 			
 			
