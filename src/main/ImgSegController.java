@@ -295,33 +295,38 @@ public class ImgSegController extends Stage
             //apply sobel for edge detection
 			private Mat applySobel(Mat image)
 			{
-				// create grayscale and final result objects     
-				Mat gray = new Mat();
-		        Mat sobel = new Mat(); 
+				    // create grayscale and result object of type Mat     
+				    Mat gray = new Mat();
+			        Mat sobel = new Mat(); 
 
-		        //Mat object to store gradient and absolute gradient
-		        Mat x = new Mat();
-		        Mat abs_x = new Mat();
+			        //Mat object to store gradient and absolute gradient in x direction
+			        Mat x = new Mat();
+			        Mat abs_x = new Mat();
+				
+			        //Mat object to store gradient and absolute gradient in y direction
+			        Mat y = new Mat();
+			        Mat abs_y = new Mat();
+				
+			        //Apply a GaussianBlur to reduce the noise ( kernel size = 3 )
+			        Imgproc.GaussianBlur( image, image, new Size(3, 3), 0, 0);
 
-		        Mat y = new Mat();
-		        Mat abs_y = new Mat();
+			        //Converting to grayscale
+			        Imgproc.cvtColor(image, gray, Imgproc.COLOR_BGR2GRAY);
+			        
+			        //Calculating gradient in vertical direction
+			        Imgproc.Sobel(gray, y, CvType.CV_16S, 0, 1, 3, 1, 0);
 
-		        //Converting to grayscale image
-		        Imgproc.cvtColor(image, gray, Imgproc.COLOR_BGR2GRAY);
-		        
-		        //Calculating gradient in vertical direction
-		        Imgproc.Sobel(gray, y, CvType.CV_16S, 0, 1, 3, 1, 0);
+			        //Calculating gradient in horizontal direction
+			        Imgproc.Sobel(gray, x, CvType.CV_16S, 1, 0, 3, 1, 0);		        
 
-		        //Calculating gradient in horizontal direction
-		        Imgproc.Sobel(gray, x, CvType.CV_16S, 1, 0, 3, 1, 0);		        
-
-		        //Calculating absolute value of gradients in both the direction
-		        Core.convertScaleAbs(x, abs_x);
-		        Core.convertScaleAbs(y, abs_y);
-
-		        Core.addWeighted(abs_x, threshold.getValue(), abs_y, threshold.getValue(), threshold.getValue() *2, sobel);
-						
-				return sobel;
+			        //Calculating absolute value of gradients in both the direction
+			        Core.convertScaleAbs(x, abs_x);
+			        Core.convertScaleAbs(y, abs_y);
+		
+			        //Calculating absolute magnitude of the gradient
+			        Core.addWeighted(abs_x, threshold.getValue(), abs_y, threshold.getValue(),0, sobel);
+							
+			        return sobel;
 	
 			}
 			          
@@ -331,23 +336,20 @@ public class ImgSegController extends Stage
 				Mat boundary = new Mat();
 					
 			    Imgproc.cvtColor(imageFrame, boundary, Imgproc.COLOR_BGR2GRAY);
-			    
-			    // get the average hue value of the image
-				double threshValue = this.getHistAverage(boundary);
-						
+
 				Imgproc.blur(boundary, boundary, new Size(5, 5));
 					
 				// dilate to fill gaps, erode to smooth edges
-				Imgproc.dilate(boundary, boundary, new Mat(), new Point(-1, -1), 4);
-				Imgproc.erode(boundary, boundary, new Mat(), new Point(-1, -1), 3);
-				
+				Imgproc.dilate(boundary, boundary, new Mat(), new Point(-1, -1), 6);
+				Imgproc.erode(boundary, boundary, new Mat(), new Point(-1, -1), 7);
+		
 				//get foreground of the image
 				if(foreground.isSelected())
-				Imgproc.threshold(boundary, boundary, threshValue, 179.0, Imgproc.THRESH_BINARY+ Imgproc.THRESH_OTSU);
+				Imgproc.threshold(boundary, boundary, 127, 255.0, Imgproc.THRESH_BINARY+ Imgproc.THRESH_OTSU);
 				
 				//get foreground of the image
 				if(background.isSelected())
-				Imgproc.threshold(boundary, boundary, threshValue, 179.0, Imgproc.THRESH_BINARY_INV +Imgproc.THRESH_OTSU);
+				Imgproc.threshold(boundary, boundary, 127, 255.0, Imgproc.THRESH_BINARY_INV +Imgproc.THRESH_OTSU);
 					
 				// create the new image
 				Mat foreground = new Mat(imageFrame.size(), CvType.CV_8UC3, new Scalar(255,255,255));
@@ -356,24 +358,6 @@ public class ImgSegController extends Stage
 					
 			    return foreground;
 			 }
-			 
-
-			private double getHistAverage(Mat boundary) {
-
-				double average = 0.0;
-				Mat hist = new Mat();
-				MatOfInt histSize = new MatOfInt(180);
-				List<Mat> split = new ArrayList<>();
-				split.add(boundary);
-					
-				// compute the histogram
-				Imgproc.calcHist(split, new MatOfInt(0), new Mat(), hist, histSize, new MatOfFloat(0, 179));
-
-				for (int h = 0; h < 180; h++)
-				    average += (hist.get(h, 0)[0] * h);
-					
-				return average = average / boundary.size().height / boundary.size().width;
-			}
 
 			//split image into blue, red and green channel, return red
 			private Mat applyRedChannel(Mat imageFrame) {
