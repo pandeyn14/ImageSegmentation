@@ -43,6 +43,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
@@ -107,12 +108,29 @@ public class ImgSegController extends Stage
 			@FXML
 			private Slider threshold;
 			
+			@FXML
+			private TextField erodeThreshold;
+			
+			@FXML
+			private TextField dilateThreshold;
 			//Display threshold value on GUI
 			@FXML
 			private Label thresholdValue;
 			
+			@FXML
+			private Label	dilatethreshval;
+			
+			@FXML
+			private Label	erodethreshval;
+			
 			@FXML 
 			private Label thresholdLabel;
+			
+			@FXML 
+			private Label dilateLabel;
+			
+			@FXML 
+			private Label erodeLabel;
 
 			private Mat image;
 			
@@ -156,7 +174,10 @@ public class ImgSegController extends Stage
 						redChannel.setDisable(false);
 						saveImageButton.setDisable(false);
 						thresholdLabel.setDisable(false);
-						
+						dilateThreshold.setDisable(false);
+						erodeThreshold.setDisable(false);
+						erodeLabel.setDisable(false);
+						dilateLabel.setDisable(false);
 						
 					} catch (MalformedURLException e) {
 						// TODO Auto-generated catch block
@@ -227,12 +248,16 @@ public class ImgSegController extends Stage
 				if (this.foreground.isSelected()){
 					imageFrame = this.applySegmentation(imageFrame);	
 					Image processedImage =  matToImg(imageFrame);
+				//	dilatethreshval.setText((Double.toString((dilateThreshold).getValue())).format("%.2f", dilateThreshold.getValue()));
+				//	erodethreshval.setText((Double.toString(erodeThreshold.getValue())).format("%.2f", erodeThreshold.getValue()));
 					currentFrame.setImage(processedImage);
 				}
 				
 				if (this.background.isSelected()){
 					imageFrame = this.applySegmentation(imageFrame);	
 					Image processedImage =  matToImg(imageFrame);
+				//	dilatethreshval.setText((Double.toString((dilateThreshold).getValue())).format("%.2f", dilateThreshold.getValue()));
+				//	erodethreshval.setText((Double.toString(erodeThreshold.getValue())).format("%.2f", erodeThreshold.getValue()));
 					currentFrame.setImage(processedImage);
 				}
 				
@@ -326,7 +351,7 @@ public class ImgSegController extends Stage
 			        //Calculating absolute magnitude of the gradient
 			        Core.addWeighted(abs_x, threshold.getValue(), abs_y, threshold.getValue(),0, sobel);
 							
-			        return sobel;
+				return sobel;
 	
 			}
 			          
@@ -334,14 +359,20 @@ public class ImgSegController extends Stage
 			 private Mat applySegmentation(Mat imageFrame){
 				 
 				Mat boundary = new Mat();
-					
-			    Imgproc.cvtColor(imageFrame, boundary, Imgproc.COLOR_BGR2GRAY);
+				
+				Imgproc.cvtColor(imageFrame, boundary, Imgproc.COLOR_BGR2GRAY);
 
 				Imgproc.blur(boundary, boundary, new Size(5, 5));
 					
-				// dilate to fill gaps, erode to smooth edges
-				Imgproc.dilate(boundary, boundary, new Mat(), new Point(-1, -1), 6);
-				Imgproc.erode(boundary, boundary, new Mat(), new Point(-1, -1), 7);
+			    // dilate to fill gaps, erode to smooth edges
+			    //	int dilate = (int) this.dilateThreshold.getValue();
+			    //	int erode = (int) this.erodeThreshold.getValue();
+				
+				int dilate = (int) Double.parseDouble(this.dilateThreshold.getText()) ;
+				int erode =  (int) Double.parseDouble(this.erodeThreshold.getText()) ;
+				//System.out.println(dilate+" "+erode);
+				Imgproc.dilate(boundary, boundary, new Mat(), new Point(-1, -1), dilate );
+				Imgproc.erode(boundary, boundary, new Mat(), new Point(-1, -1),erode);
 		
 				//get foreground of the image
 				if(foreground.isSelected())

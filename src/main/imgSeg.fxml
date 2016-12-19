@@ -9,13 +9,19 @@
 
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="main.ImgSegController">
   <bottom>
-    <HBox alignment="CENTER" spacing="30.0">
+    <HBox alignment="CENTER" spacing="10.0">
       <padding>
-        <Insets bottom="25.0" right="25.0" top="25.0" />
+        <Insets bottom="15.0" right="15.0" top="15.0" />
       </padding>
+      <Label fx:id="dilateLabel" text="Dilate" disable="true" />
+      <TextField fx:id="dilateThreshold" text='0' disable="true"/>
+      <Label fx:id="erodeLabel" text="Erode" disable="true" />
+       <TextField fx:id="erodeThreshold" text='0' disable="true"/>
+   
       <Button fx:id="chooseImageButton" alignment="CENTER" onAction="#chooseImage" text="Choose Image" />
       <Button fx:id="saveImageButton" alignment="CENTER" onAction="#saveImage" text="Save Image"  disable="true"/>
       <Button fx:id="loadImageButton" alignment="CENTER" onAction="#loadImage" text="Apply Operation"  disable="true"/>
+      
     </HBox>
   </bottom>
   <center>
@@ -40,7 +46,7 @@
         <CheckBox fx:id="sobel" onAction="#sobelSelected" text="Sobel" disable="true"/>
         <CheckBox fx:id="canny" onAction="#cannySelected" text="Canny" disable="true"/>
         <Label fx:id="thresholdLabel" text="Threshold" disable="true" />
-        <Slider fx:id="threshold" blockIncrement="0.25" disable="true" max="55.0" min="0.25" />
+        <Slider fx:id="threshold" blockIncrement="0.25" disable="true" max="160.0" min="0.25" />
         <Label fx:id="thresholdValue" text="" />
       </HBox>
       <Separator />
